@@ -39,11 +39,11 @@ class DmmstrySpider(scrapy.Spider):
         '_fbp': 'fb.1.1583209030738.1211827902',
         '_gid': 'GA1.2.1945430352.1583999109',
         'messages': '9b48edf1e146f010db726ae58f997e9ac8611c44$[[\\"__json_message\\"\\0540\\05440\\054\\"Wrong state parameter given.\\"\\054\\"social-auth google-oauth2\\"]]',
-        'device_session': 'eyJwYXNzY29kZSI6MTAzODl9:1jDhFH:3bzGkygR1V-IYuWlzXIcc6cSvQ8',
+        'device_session': 'eyJwYXNzY29kZSI6MTM4NTJ9:1jDhlV:agjpPAoE9wpaVD68JJBYBGwWe4E',
         '_gat_pageTracker': '1',
         '_gat': '1',
-        'csrftoken': 'hibvYektFG3vS0Ltzlb9Jl5UBdw0T5CEJC47itl48mbJH4GOjx4pSD9YDQKJSdPG',
-        'sessionid': 'rd7fkd2nmwlvw0mqdhbeq4eewh3tdo46',
+        'csrftoken': 'o6RxzsKewhq1NppaLZSRg6fdYI8znohmEKxfJF3tspjiEdmA13BFOn9fd95jLKiz',
+        'sessionid': 'j93mmt41ouwou8ps5g3evlxmsbgk15fo',
     }
 
     headers = {
@@ -87,7 +87,7 @@ class DmmstrySpider(scrapy.Spider):
                 self.headers['Referer'] = url
                 if url in used_urls:
                     continue
-                yield scrapy.Request(url=url,headers=self.headers,cookies=self.cookies, callback=self.parse)
+                yield scrapy.Request(url='https://dmmspy.com/v2/dynamic-grid',headers=self.headers,cookies=self.cookies, callback=self.parse)
              
     def parse_owner_name(self,div_caption):
         try:
@@ -156,7 +156,7 @@ class DmmstrySpider(scrapy.Spider):
         res_dict["like_num"] = self.parse_like_num(div_caption.parent)
         res_dict["share_num"] = self.parse_share_num(div_caption.parent)
         res_dict["commnet_num"] = self.parse_comment_num(div_caption.parent)
-        res_str = ",",res_dict.values()
+        res_str = ",".join(res_dict.values())
              
         self.product_f.write(res_str + '\n')
 
