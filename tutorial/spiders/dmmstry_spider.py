@@ -25,9 +25,9 @@ def clean_str(s):
 
 class DmmstrySpider(scrapy.Spider):
     name = "dmmstry_product"
-    url_used_file = '/root/code/scrapy_project/scr/spiders/data_config/url_used.csv'
-    key_word_file = '/root/code/scrapy_project/scr/spiders/data_config/key_word.csv'
-    product_detail_file = '/root/code/scrapy_project/scr/spiders/result/product_detail'
+    url_used_file = '/root/code/scrapy_project/tutorial/spiders/data_config/url_used.csv'
+    key_word_file = '/root/code/scrapy_project/tutorial/spiders/data_config/key_word.csv'
+    product_detail_file = '/root/code/scrapy_project/tutorial/spiders/result/product_detail'
 
     custom_settings = {
         'DOWNLOAD_DELAY': 0.5,
@@ -37,15 +37,15 @@ class DmmstrySpider(scrapy.Spider):
     cookies = {
         '_ga': 'GA1.2.1328724326.1583206558',
         '_fbp': 'fb.1.1583209030738.1211827902',
-        '_gid': 'GA1.2.1156183927.1583326665',
-        '_gat': '1',
+        '_gid': 'GA1.2.1945430352.1583999109',
+        'messages': '9b48edf1e146f010db726ae58f997e9ac8611c44$[[\\"__json_message\\"\\0540\\05440\\054\\"Wrong state parameter given.\\"\\054\\"social-auth google-oauth2\\"]]',
+        'device_session': 'eyJwYXNzY29kZSI6MTAzODl9:1jDhFH:3bzGkygR1V-IYuWlzXIcc6cSvQ8',
         '_gat_pageTracker': '1',
-        'csrftoken': 'L7iicojec9unPUvYscquGXxNGAPdnjzKHrQTwRJJQm5SoTmYQ4oiYLdi8LeJLVTl',
-        'sessionid': 'u80cjvxnbhh5nh45j87objvwi20qbjmi',
-        'device_session': 'eyJwYXNzY29kZSI6ODM3MjZ9:1jARsk:3VjIQ5xBBNKMlFd4bZxz7agU68M',
+        '_gat': '1',
+        'csrftoken': 'hibvYektFG3vS0Ltzlb9Jl5UBdw0T5CEJC47itl48mbJH4GOjx4pSD9YDQKJSdPG',
+        'sessionid': 'rd7fkd2nmwlvw0mqdhbeq4eewh3tdo46',
     }
 
-    
     headers = {
             'Connection': 'keep-alive',
             'Upgrade-Insecure-Requests': '1',
@@ -58,6 +58,8 @@ class DmmstrySpider(scrapy.Spider):
             'Referer': 'https://dmmspy.com/v2/dynamic-grid?search_mode=',
             'Accept-Language': 'zh-CN,zh;q=0.9'
         }
+    product_f = open(product_detail_file, 'a')
+    url_f = open(url_used_file, 'a')
     
     def start_requests(self):
         # get used_url
@@ -147,7 +149,7 @@ class DmmstrySpider(scrapy.Spider):
         res_dict = collections.OrderedDict()
         res_dict["platform"] = self.parse_platform(div_caption.parent)
         res_dict["owner_name"] = self.parse_owner_name(div_caption)
-        res_dict[["domain"] = self.parse_domain(div_caption)
+        res_dict["domain"] = self.parse_domain(div_caption)
         res_dict["link"] = self.parse_link(div_caption)
         res_dict["pixelId"] = self.parse_pixelId(div_caption)
         res_dict["facebook_url"] = self.parse_facebook(div_caption)
@@ -156,18 +158,18 @@ class DmmstrySpider(scrapy.Spider):
         res_dict["commnet_num"] = self.parse_comment_num(div_caption.parent)
         res_str = ",",res_dict.values()
              
-        with open(self.product_detail_file, 'a') as f:
-            f.write(res_str + '\n')
+        self.product_f.write(res_str + '\n')
 
     def parse_one_page(self,content):
         soup = BeautifulSoup(content)
         div_captions = soup.find_all(name='div',class_="caption")
+        print("!!!!one_page_len:",len(div_captions))
         if len(div_captions) > 0:
             for div_caption in div_captions:
                 self.parse_info(div_caption)
     
     def parse(self, response):
         self.parse_one_page(response.text)
-        with open(self.url_used_file, 'a') as f:
-            f.write(response.request.url + '\n')
+#         self.url_f.write(response.text + '\n')
+        self.url_f.write(response.request.url + '\n')
         
