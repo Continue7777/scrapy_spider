@@ -42,8 +42,8 @@ class DmmstrySpider(scrapy.Spider):
         'device_session': 'eyJwYXNzY29kZSI6MTM4NTJ9:1jDhlV:agjpPAoE9wpaVD68JJBYBGwWe4E',
         '_gat_pageTracker': '1',
         '_gat': '1',
-        'csrftoken': 'o6RxzsKewhq1NppaLZSRg6fdYI8znohmEKxfJF3tspjiEdmA13BFOn9fd95jLKiz',
-        'sessionid': 'j93mmt41ouwou8ps5g3evlxmsbgk15fo',
+        'csrftoken': 'tY1XM9on0aifSj8TgsypGLUkNB6wzyNJ13qhRZHs0Imy5pxeMG25WtNXppYiTtKA',
+        'sessionid': '9vx8594vk9vkysz07ygkruhl300hhu7j',
     }
 
     headers = {
@@ -87,7 +87,7 @@ class DmmstrySpider(scrapy.Spider):
                 self.headers['Referer'] = url
                 if url in used_urls:
                     continue
-                yield scrapy.Request(url='https://dmmspy.com/v2/dynamic-grid',headers=self.headers,cookies=self.cookies, callback=self.parse)
+                yield scrapy.Request(url='https://dmmspy.com/v2/dynamic-grid',headers=self.headers,cookies=self.cookies, callback=self.parse,dont_filter=True)
              
     def parse_owner_name(self,div_caption):
         try:
