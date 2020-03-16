@@ -7,6 +7,8 @@ import requests
 import re
 from datetime import datetime
 from datetime import timedelta
+import collections
+
 
 
 def get_date(days=0):
@@ -22,19 +24,25 @@ def clean_str(s):
 
 
 class DmmstrySpider(scrapy.Spider):
-    name = "dmmstry"
-    abs_path = os.getcwd() + '/spiders/'
-    url_used_file = 'url_used.csv'
+    name = "dmmstry_product"
+    url_used_file = '/root/code/scrapy_project/scr/spiders/data_config/url_used.csv'
+    key_word_file = '/root/code/scrapy_project/scr/spiders/data_config/key_word.csv'
+    product_detail_file = '/root/code/scrapy_project/scr/spiders/result/product_detail'
 
+    custom_settings = {
+        'DOWNLOAD_DELAY': 0.5,
+        'CONCURRENT_REQUESTS':1
+    }
+        
     cookies = {
         '_ga': 'GA1.2.1328724326.1583206558',
         '_fbp': 'fb.1.1583209030738.1211827902',
         '_gid': 'GA1.2.1156183927.1583326665',
         '_gat': '1',
-        'csrftoken': '6QzLjbiv6stfpAr6ARCsY8Mz0K583k5eDsLQWOQRVn3JBsnR1C4SAPslFRwmP2IF',
-        'sessionid': '56kl38n7q71g3rbz5n67565c9efijgzg',
-        'device_session': 'eyJwYXNzY29kZSI6MTA0NDB9:1jARcz:dZHzn009WiSSkdrL7sUSU6cslbw',
         '_gat_pageTracker': '1',
+        'csrftoken': 'L7iicojec9unPUvYscquGXxNGAPdnjzKHrQTwRJJQm5SoTmYQ4oiYLdi8LeJLVTl',
+        'sessionid': 'u80cjvxnbhh5nh45j87objvwi20qbjmi',
+        'device_session': 'eyJwYXNzY29kZSI6ODM3MjZ9:1jARsk:3VjIQ5xBBNKMlFd4bZxz7agU68M',
     }
 
     
@@ -52,17 +60,24 @@ class DmmstrySpider(scrapy.Spider):
         }
     
     def start_requests(self):
-        url_df = pd.read_csv(self.abs_path + self.url_used_file,header=None,names=['url'])
-        key_word_df = pd.read_csv(self.abs_path +"key_word.csv",sep='\t')
+        # get used_url
+        used_urls = []
+        if os.path.isfile(self.url_used_file):
+            url_df = pd.read_csv(self.url_used_file,header=None,names=['url'])
+            used_urls = set(url_df['url'].tolist())
+
+        # get search key_word
+        key_word_df = pd.read_csv(self.key_word_file,sep='\t')
         key_word_list = set(key_word_df['key_word'].tolist())
-        all_page_num = 85
-        used_urls = url_df['url'].tolist()
-        urls = []
+        #  key_word_list = ['tumbler cup'] # single test
         
+        # set search page_num
+        all_page_num = 85
+        
+        # get last 6 months
         post_time = get_date(30 * 6) + " - " + get_date(0)
         post_time = post_time.replace(" ","+").replace(',','%2C')
-        
-        key_word_list = ['tumbler cup']
+              
         for key_word in key_word_list:
             for page_num in range(1,all_page_num):
                 key_word_web = "+".join(key_word.split(" "))
@@ -70,7 +85,6 @@ class DmmstrySpider(scrapy.Spider):
                 self.headers['Referer'] = url
                 if url in used_urls:
                     continue
-                urls.append(url)
                 yield scrapy.Request(url=url,headers=self.headers,cookies=self.cookies, callback=self.parse)
              
     def parse_owner_name(self,div_caption):
@@ -99,16 +113,6 @@ class DmmstrySpider(scrapy.Spider):
         except AttributeError  as e:
             return ""
     
-    
-#     def parse_facebook(self,div_caption):
-#         try:      
-#             response = requests.get("http://dmmspy.com/" + div_caption.a['href'])
-#             facebook_url = re.findall("https://www.facebook.com/\w*",response.text)[0]
-#             response_facebook = requests.get(facebook_url)
-#             return response_facebook.url
-#         except AttributeError  as e:
-#             return ""
-
     def parse_facebook(self,div_caption):
         try:      
             return "http://dmmspy.com/" + div_caption.a['href']
@@ -140,49 +144,30 @@ class DmmstrySpider(scrapy.Spider):
             return '0' 
         
     def parse_info(self,div_caption):
-        platform = self.parse_platform(div_caption.parent)
-        owner_name = self.parse_owner_name(div_caption)
-        domain = self.parse_domain(div_caption)
-        link = self.parse_link(div_caption)
-        pixelId = self.parse_pixelId(div_caption)
-        facebook_url = self.parse_facebook(div_caption)
-        like_num = self.parse_like_num(div_caption.parent)
-        share_num = self.parse_share_num(div_caption.parent)
-        commnet_num = self.parse_comment_num(div_caption.parent)
-        return platform,owner_name,domain,link,pixelId,facebook_url,like_num,share_num,commnet_num
+        res_dict = collections.OrderedDict()
+        res_dict["platform"] = self.parse_platform(div_caption.parent)
+        res_dict["owner_name"] = self.parse_owner_name(div_caption)
+        res_dict[["domain"] = self.parse_domain(div_caption)
+        res_dict["link"] = self.parse_link(div_caption)
+        res_dict["pixelId"] = self.parse_pixelId(div_caption)
+        res_dict["facebook_url"] = self.parse_facebook(div_caption)
+        res_dict["like_num"] = self.parse_like_num(div_caption.parent)
+        res_dict["share_num"] = self.parse_share_num(div_caption.parent)
+        res_dict["commnet_num"] = self.parse_comment_num(div_caption.parent)
+        res_str = ",",res_dict.values()
+             
+        with open(self.product_detail_file, 'a') as f:
+            f.write(res_str + '\n')
 
     def parse_one_page(self,content):
-        platform_list = []
-        owner_name_list = []
-        domain_list = []
-        link_list = []
-        pixelId_list = []
-        facebook_url_list = []
-        like_num_list = []
-        share_num_list = []
-        comment_num_list = []
-        
         soup = BeautifulSoup(content)
         div_captions = soup.find_all(name='div',class_="caption")
         if len(div_captions) > 0:
             for div_caption in div_captions:
-                platform,owner_name,domain,link,pixelId,facebook_url,like_num,share_num,comment_num = self.parse_info(div_caption)
-                platform_list.append(platform)
-                owner_name_list.append(owner_name)
-                domain_list.append(domain)
-                link_list.append(link)
-                pixelId_list.append(pixelId)
-                facebook_url_list.append(facebook_url)
-                like_num_list.append(like_num)
-                share_num_list.append(share_num)
-                comment_num_list.append(comment_num)
-        res_df = pd.DataFrame(data={"platform":platform_list,"owner_name":owner_name_list,"domain":domain_list,"link":link_list,"pixelId":pixelId_list,"facebook_url":facebook_url_list,'like_num':like_num_list,"share_num":share_num_list,"comment_num":comment_num_list},columns=['platform','domain','owner_name','link','pixelId','facebook_url','like_num','share_num','comment_num'])
-        return res_df
-
+                self.parse_info(div_caption)
+    
     def parse(self, response):
-        res_df = self.parse_one_page(response.text)
-        print "!!!!!!!!!!!!!",len(res_df)
-        res_df.to_csv(self.abs_path + "result_detail.csv",mode='a',index=False,header=False)
-        with open(self.abs_path + self.url_used_file, 'a') as f:
+        self.parse_one_page(response.text)
+        with open(self.url_used_file, 'a') as f:
             f.write(response.request.url + '\n')
         
