@@ -9,6 +9,10 @@ from datetime import datetime
 from datetime import timedelta
 import collections
 
+import sys 
+
+reload(sys) 
+sys.setdefaultencoding('utf8') 
 
 
 def get_date(days=0):
@@ -38,14 +42,14 @@ class DmmstrySpider(scrapy.Spider):
         '_ga': 'GA1.2.1328724326.1583206558',
         '_fbp': 'fb.1.1583209030738.1211827902',
         '_gid': 'GA1.2.1945430352.1583999109',
-        'messages': '9b48edf1e146f010db726ae58f997e9ac8611c44$[[\\"__json_message\\"\\0540\\05440\\054\\"Wrong state parameter given.\\"\\054\\"social-auth google-oauth2\\"]]',
-        'device_session': 'eyJwYXNzY29kZSI6MTM4NTJ9:1jDhlV:agjpPAoE9wpaVD68JJBYBGwWe4E',
+        'messages': '45e8599ae577b939fe9c7df895c0d5f2bf0ae967$[[\\"__json_message\\"\\0540\\05440\\054\\"Wrong state parameter given.\\"\\054\\"social-auth google-oauth2\\"]\\054[\\"__json_message\\"\\0540\\05440\\054\\"Session value state missing.\\"\\054\\"social-auth google-oauth2\\"]]',
+        'csrftoken': '1j3kjNh5yV1tbwdjCJlISrZTqRErMUOBmqvHSqAepMO0i8j927y6OXk3Qnd6cHOX',
+        'sessionid': 'i020q8pkptl34oe27eii2pnt30enhhxu',
         '_gat_pageTracker': '1',
+        'device_session': 'eyJwYXNzY29kZSI6MTQ3MzN9:1jDin5:QmqL1sAsTgGYaRrf311XbRLNPDs',
         '_gat': '1',
-        'csrftoken': 'tY1XM9on0aifSj8TgsypGLUkNB6wzyNJ13qhRZHs0Imy5pxeMG25WtNXppYiTtKA',
-        'sessionid': '9vx8594vk9vkysz07ygkruhl300hhu7j',
     }
-
+    
     headers = {
             'Connection': 'keep-alive',
             'Upgrade-Insecure-Requests': '1',
@@ -55,7 +59,7 @@ class DmmstrySpider(scrapy.Spider):
             'Sec-Fetch-Site': 'same-origin',
             'Sec-Fetch-Mode': 'navigate',
             'Sec-Fetch-User': '?1',
-            'Referer': 'https://dmmspy.com/v2/dynamic-grid?search_mode=',
+            'Referer': 'https://dmmspy.com/v2/dynamic-grid',
             'Accept-Language': 'zh-CN,zh;q=0.9'
         }
     product_f = open(product_detail_file, 'a')
@@ -78,16 +82,15 @@ class DmmstrySpider(scrapy.Spider):
         
         # get last 6 months
         post_time = get_date(30 * 6) + " - " + get_date(0)
-        post_time = post_time.replace(" ","+").replace(',','%2C')
+        post_time = post_time.replace(" ","%").replace(',','%2C')
               
         for key_word in key_word_list:
             for page_num in range(1,all_page_num):
-                key_word_web = "+".join(key_word.split(" "))
+                key_word_web = "%".join(key_word.split(" "))
                 url = "http://dmmspy.com/v2/dynamic-grid?page="+str(page_num)+"&search_mode=&q=" + key_word_web + "&likes=&comments=&post_time=" + post_time + "&sort="    
-                self.headers['Referer'] = url
                 if url in used_urls:
                     continue
-                yield scrapy.Request(url='https://dmmspy.com/v2/dynamic-grid',headers=self.headers,cookies=self.cookies, callback=self.parse,dont_filter=True)
+                yield scrapy.Request(url=url,headers=self.headers,cookies=self.cookies, callback=self.parse,dont_filter=True)
              
     def parse_owner_name(self,div_caption):
         try:
