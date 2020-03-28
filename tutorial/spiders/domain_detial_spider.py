@@ -40,9 +40,10 @@ class DomainDetailSpider(scrapy.Spider):
 
     custom_settings = {
         'SPLASH_URL': 'http://172.31.115.244:8050',
-        'CONCURRENT_REQUESTS ':300,
+        'CONCURRENT_REQUESTS ':10,
         'RETRY_ENABLED' : True,
         'DOWNLOAD_TIMEOUT' : 50,
+         'DOWNLOAD_DELAY': 0.5,
         'DOWNLOADER_MIDDLEWARES' : {
             'scrapy_splash.SplashCookiesMiddleware': 723,
             'scrapy_splash.SplashMiddleware': 725,
@@ -57,6 +58,10 @@ class DomainDetailSpider(scrapy.Spider):
     domain_file = "/root/code/scrapy_project/tutorial/spiders/result/domain_detail.csv"
     domain_f = open(domain_file,'a')
 #     owner_file = "owner_detail.csv"
+    domain_used_list = []
+    if os.path.isfile("/root/code/scrapy_project/tutorial/spiders/result/domain_detail.csv"):
+        domain_df = pd.read_csv("/root/code/scrapy_project/tutorial/spiders/result/domain_detail.csv",sep='\t',names=['domain','url','code','emails']) 
+        domain_used_list = list(set(domain_df[domain_df['code'].isin(['200','404','TimeOut'])]['domain'].tolist()))
     
     def get_emails(self,s):
         emails = set(re.findall(r'[0-9a-zA-Z_]{0,50}@[0-9a-zA-Z]{1,30}\.[0-9a-zA-Z]{1,13}',s))
@@ -82,11 +87,14 @@ class DomainDetailSpider(scrapy.Spider):
         
 #         for domain in domain_list:
 #             yield scrapy.Request("https://"+ domain,callback=self.parse_domain_availble,meta={"domain":domain})
-        for domain in domain_list:     
+        for domain in domain_list: 
+            if domain in self.domain_used_list:
+                print domain + "used!"
+                continue
             yield SplashRequest("https://"+ domain, self.parse_email,meta={"domain":domain,"url":domain},errback=self.errback,
                             endpoint='execute',
                             args={
-                                'wait': 0.1,
+                                'wait': 1,
                                 'lua_source': script
                             }
             )
